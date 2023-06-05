@@ -3,7 +3,7 @@ const fs = require('fs');
 
 const s3 = new AWS.S3({
   accessKeyId: process.env.AKIAXLHJOSZZMEZZHBJU,
-  secretAccessKey: process.env.U/NkwjmPaGhe7cdK8BgdO4MxwDeLsisHmPNuH3Z5
+  secretAccessKey: process.env.U/{key}
 });
 
 const uploadImageToS3 = (file) => {
