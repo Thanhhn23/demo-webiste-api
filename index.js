@@ -36,7 +36,7 @@ app.use('/api/v1/authenticate', authenticateUser, authentication);
 
 app.get('/', (req, res) => {
     console.log('Hello')
-    res.send('Hello')
+    res.status(200).send('Hello anh Hoang service')
 })
 
 app.listen(5000, () => {
