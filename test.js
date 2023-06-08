@@ -70,3 +70,5 @@ const writeFile = async (portalId, destinationId, obj) => {
   
   processWriteFile();
 
+
+

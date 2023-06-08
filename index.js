@@ -8,7 +8,6 @@ const login = require('./route/login');
 const authentication = require('./route/authentication');
 const path = require("path");
 const { authenticateUser } = require('./middle');
-
 const app = new express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
@@ -43,3 +42,5 @@ app.get('/', (req, res) => {
 app.listen(5000, () => {
     console.log('Server listening on portal 5000')
 })
+
+module.exports = app;

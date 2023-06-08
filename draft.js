@@ -2,8 +2,8 @@ const AWS = require('aws-sdk');
 const fs = require('fs');
 
 const s3 = new AWS.S3({
-  accessKeyId: process.env.{key},
-  secretAccessKey: process.env.U/{key}
+  accessKeyId: process.env,
+  secretAccessKey: process.env.U
 });
 
 const uploadImageToS3 = (file) => {
