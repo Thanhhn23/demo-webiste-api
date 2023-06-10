@@ -50,32 +50,32 @@ const fetchAllProducts = async () => {
 }
 
 const getDetailProduct = async (id) => {
-       
+
     const redis = new Redis();
-   return new Promise((resolve, reject) => {
-    const cacheKey = `products/${id}`; 
-    redis.get(cacheKey, async(err, data)=> {
-        if(err){
-            //console.log('Fail to retrieve data from cache');
-            resolve(fetchDetailProduct(id));
-            
-        }
-        else if(data){
-            //console.log('Data retrieved from cache successfully');
-            resolve(JSON.parse(data));
-        }
-        else {
-            const product = await fetchDetailProduct(id);
-            redis.set(cacheKey, JSON.stringify(product));
-            //console.log('Data retrieved from database');
-            resolve(product);
-        }
+    return new Promise((resolve, reject) => {
+        const cacheKey = `products/${id}`;
+        redis.get(cacheKey, async (err, data) => {
+            if (err) {
+                //console.log('Fail to retrieve data from cache');
+                resolve(fetchDetailProduct(id));
+
+            }
+            else if (data) {
+                //console.log('Data retrieved from cache successfully');
+                resolve(JSON.parse(data));
+            }
+            else {
+                const product = await fetchDetailProduct(id);
+                redis.set(cacheKey, JSON.stringify(product));
+                //console.log('Data retrieved from database');
+                resolve(product);
+            }
+        })
     })
-   })
 }
 
 
-const fetchDetailProduct = async(id) => {
+const fetchDetailProduct = async (id) => {
     const result = await db.query('SELECT * FROM products where id = $1', id);
     //console.log('Get Product Detail');
     return result
@@ -109,7 +109,7 @@ route.get('/', async (req, res) => {
             return res.status(200).json(result);
         }
         else if (from_price && to_price) {
-            
+
             const result = await db.query(`SELECT * FROM products WHERE current_price BETWEEN $1 AND $2 `, [from_price, to_price]);
             return res.status(200).json(result);
         };
@@ -181,9 +181,9 @@ route.post('/', async (req, res) => {
         if (!(req.user.user_type == "admin")) {
             return res.status(401).json({ message: "You don't have the permisson" })
         }
-        
 
-        
+
+
         if (!id) {
             res.status(400).send('Invalid data input.Please try again')
         }
@@ -191,8 +191,8 @@ route.post('/', async (req, res) => {
             const result = await db.one('INSERT INTO products (id, name, current_price, original_price, page_url, category, image_url, created_date, last_modified_date) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *', [id, name, price, originalPrice, url, category, image_url, new Date(), new Date()]);
             const redis = new Redis();
             redis.del('products')
-            .then(count => console.log(`Delete ${count} entry of cache key products`))
-            .catch(e => console.log(e));
+                .then(count => console.log(`Delete ${count} entry of cache key products`))
+                .catch(e => console.log(e));
             res.status(201).json(result);
             //console.log(result);
         }
@@ -218,8 +218,8 @@ route.put('/:id', async (req, res) => {
             const updatedProduct = await db.one('UPDATE products SET name = $1, current_price = $2, original_price = $3, category = $4, image_url = $5, page_url = $6, last_modified_date = $7   where id = $8 RETURNING *', [name, current_price, original_price, category, image_url, page_url, last_modified_date, id]);
             const redis = new Redis();
             redis.del(`products/${id}`)
-            .then(count => console.log(`Delete ${count} entry of cache key products/${id}`))
-            .catch(e => console.log(e));
+                .then(count => console.log(`Delete ${count} entry of cache key products/${id}`))
+                .catch(e => console.log(e));
             res.status(200).json(updatedProduct);
             //console.log(updatedProduct);
         }
