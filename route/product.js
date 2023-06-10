@@ -4,6 +4,13 @@ const db = require('../db');
 const { now } = require('lodash');
 const Redis = require("ioredis");
 
+const client = new Redis({
+    password: 'QVcbtNKhScpw9lwadvWISSqrsqqStDay',
+    host: 'redis-18027.c13.us-east-1-3.ec2.cloud.redislabs.com',
+    port: 18027
+});
+
+
 const getProducts = async (page, limit) => {
     const actualOffset = parseInt(page) * parseInt(limit);
     //console.log(actualOffset)
@@ -12,15 +19,11 @@ const getProducts = async (page, limit) => {
 }
 
 const getAllProducts = async () => {
-
-    const redis = new Redis();
     return new Promise((resolve, reject) => {
-
         const cacheKey = 'products';
-
-        redis.get(cacheKey, async (err, data) => {
+        client.get(cacheKey, async (err, data) => {
             if (err) {
-                //console.log('Fail to retrieve data from cache', err);
+                console.log('Fail to retrieve data from cache', err);
                 resolve(fetchAllProducts());
             }
             else if (data) {
@@ -31,7 +34,7 @@ const getAllProducts = async () => {
                 try {
                     const products = await fetchAllProducts();
                     //console.log('Data retrieved from database');
-                    redis.set(cacheKey, JSON.stringify(products));
+                    client.set(cacheKey, JSON.stringify(products));
                     resolve(products);
                 }
                 catch (e) {
@@ -39,7 +42,7 @@ const getAllProducts = async () => {
                 }
             }
         })
-
+        
     })
 }
 
@@ -50,11 +53,9 @@ const fetchAllProducts = async () => {
 }
 
 const getDetailProduct = async (id) => {
-
-    const redis = new Redis();
     return new Promise((resolve, reject) => {
         const cacheKey = `products/${id}`;
-        redis.get(cacheKey, async (err, data) => {
+        client.get(cacheKey, async (err, data) => {
             if (err) {
                 //console.log('Fail to retrieve data from cache');
                 resolve(fetchDetailProduct(id));
@@ -66,12 +67,13 @@ const getDetailProduct = async (id) => {
             }
             else {
                 const product = await fetchDetailProduct(id);
-                redis.set(cacheKey, JSON.stringify(product));
+                client.set(cacheKey, JSON.stringify(product));
                 //console.log('Data retrieved from database');
                 resolve(product);
             }
         })
-    })
+        
+    });
 }
 
 
@@ -189,10 +191,10 @@ route.post('/', async (req, res) => {
         }
         else {
             const result = await db.one('INSERT INTO products (id, name, current_price, original_price, page_url, category, image_url, created_date, last_modified_date) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *', [id, name, price, originalPrice, url, category, image_url, new Date(), new Date()]);
-            const redis = new Redis();
-            redis.del('products')
+            client.del('products')
                 .then(count => console.log(`Delete ${count} entry of cache key products`))
                 .catch(e => console.log(e));
+            
             res.status(201).json(result);
             //console.log(result);
         }
@@ -216,10 +218,10 @@ route.put('/:id', async (req, res) => {
         }
         else {
             const updatedProduct = await db.one('UPDATE products SET name = $1, current_price = $2, original_price = $3, category = $4, image_url = $5, page_url = $6, last_modified_date = $7   where id = $8 RETURNING *', [name, current_price, original_price, category, image_url, page_url, last_modified_date, id]);
-            const redis = new Redis();
-            redis.del(`products/${id}`)
-                .then(count => console.log(`Delete ${count} entry of cache key products/${id}`))
+            client.del(`products/${id}`)
+                .then(count => console.log(`Delete ${count} entry of cache key products`))
                 .catch(e => console.log(e));
+            
             res.status(200).json(updatedProduct);
             //console.log(updatedProduct);
         }
@@ -240,6 +242,10 @@ route.delete('/:id', async (req, res) => {
         const result = await db.oneOrNone('SELECT * FROM products WHERE id = $1', id);
         if (result) {
             await db.none('DELETE FROM products WHERE id = $1', id);
+            client.del('products')
+                .then(count => console.log(`Delete ${count} entry of cache key products`))
+                .catch(e => console.log(e));
+            
             res.status(200).send('Success')
         }
         else {
