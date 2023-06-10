@@ -12,7 +12,7 @@ const client = new Redis({
 
 
 const getProducts = async (page, limit) => {
-    const actualOffset = parseInt(page) * parseInt(limit);
+    const actualOffset = (parseInt(page) -1) * parseInt(limit);
     //console.log(actualOffset)
     const result = await db.query('SELECT * FROM products ORDER BY id ASC LIMIT $1 OFFSET $2', [limit, actualOffset]);
     return result;
@@ -89,7 +89,7 @@ const getSearchProduct = async (keyword) => {
 }
 
 const getProductWithSearch = async (page, limit, keyword) => {
-    const actualOffset = parseInt(page) * parseInt(limit);
+    const actualOffset = (parseInt(page) -1) * parseInt(limit);
     //console.log(actualOffset)
     const result = await db.query('SELECT * FROM products WHERE LOWER(unaccent(name)) LIKE LOWER(unaccent($1)) ORDER BY id ASC LIMIT $2 OFFSET $3', [`%${keyword}%`, limit, actualOffset]);
     return result;
@@ -106,7 +106,7 @@ route.get('/', async (req, res) => {
     try {
 
         if (from_price && to_price && page && limit) {
-            const actualOffset = parseInt(page) * parseInt(limit);
+            const actualOffset = (parseInt(page) -1) * parseInt(limit);
             const result = await db.query(`SELECT * FROM products WHERE current_price BETWEEN $1 AND $2 ORDER BY id ASC LIMIT $3 OFFSET $4`, [from_price, to_price, limit, actualOffset]);
             return res.status(200).json(result);
         }
