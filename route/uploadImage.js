@@ -6,7 +6,7 @@ const fs = require("fs");
 
 const app = express();
 
-const url = 'http://localhost:5000';
+const url = 'https://demo-website-api.vercel.app';
 
 route.post("/", (req, res) => {
   //console.log(req);
@@ -38,7 +38,7 @@ route.post("/", (req, res) => {
       // Write the file to a specific folder
       const finalFileName = file.newFilename + '.' + fileType;
 
-      const targetPath = path.join("/home/thanh/Documents/server-api/project_app/public", finalFileName);
+      const targetPath = path.join("https://demo-website-api.vercel.app", finalFileName);
       console.log(targetPath)
       fs.writeFile(targetPath, data, (err) => {
         if (err) {
