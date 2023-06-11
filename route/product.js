@@ -12,7 +12,7 @@ const client = new Redis({
 
 
 const getProducts = async (page, limit) => {
-    const actualOffset = (parseInt(page) -1) * parseInt(limit);
+    const actualOffset = (parseInt(page) - 1) * parseInt(limit);
     //console.log(actualOffset)
     const result = await db.query('SELECT * FROM products ORDER BY id ASC LIMIT $1 OFFSET $2', [limit, actualOffset]);
     return result;
@@ -42,7 +42,7 @@ const getAllProducts = async () => {
                 }
             }
         })
-        
+
     })
 }
 
@@ -72,7 +72,7 @@ const getDetailProduct = async (id) => {
                 resolve(product);
             }
         })
-        
+
     });
 }
 
@@ -89,7 +89,7 @@ const getSearchProduct = async (keyword) => {
 }
 
 const getProductWithSearch = async (page, limit, keyword) => {
-    const actualOffset = (parseInt(page) -1) * parseInt(limit);
+    const actualOffset = (parseInt(page) - 1) * parseInt(limit);
     //console.log(actualOffset)
     const result = await db.query('SELECT * FROM products WHERE LOWER(unaccent(name)) LIKE LOWER(unaccent($1)) ORDER BY id ASC LIMIT $2 OFFSET $3', [`%${keyword}%`, limit, actualOffset]);
     return result;
@@ -106,7 +106,7 @@ route.get('/', async (req, res) => {
     try {
 
         if (from_price && to_price && page && limit) {
-            const actualOffset = (parseInt(page) -1) * parseInt(limit);
+            const actualOffset = (parseInt(page) - 1) * parseInt(limit);
             const result = await db.query(`SELECT * FROM products WHERE current_price BETWEEN $1 AND $2 ORDER BY id ASC LIMIT $3 OFFSET $4`, [from_price, to_price, limit, actualOffset]);
             return res.status(200).json(result);
         }
@@ -161,7 +161,7 @@ route.get('/:id', async (req, res) => {
         }
         else {
             const product = await getDetailProduct(id);
-            res.status(200).json(product)
+            res.status(200).json(product);
         }
     }
     catch (e) {
@@ -174,7 +174,7 @@ route.get('/:id', async (req, res) => {
 route.post('/', async (req, res) => {
     try {
         const { id, name, currentPrice, pageUrl, originalPrice, category, imageUrl } = req.body;
-        console.log(id, name, currentPrice, pageUrl, originalPrice, category, imageUrl);   
+        console.log(id, name, currentPrice, pageUrl, originalPrice, category, imageUrl);
 
         if (!(req.user.user_type == "admin")) {
             return res.status(401).json({ message: "You don't have the permisson" })
@@ -185,12 +185,9 @@ route.post('/', async (req, res) => {
         }
         else {
             const result = await db.one('INSERT INTO products (id, name, current_price, original_price, page_url, category, image_url, created_date, last_modified_date) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *', [id, name, currentPrice, originalPrice, pageUrl, category, imageUrl, new Date(), new Date()]);
-            client.del('products')
-                .then(count => console.log(`Delete ${count} entry of cache key products`))
-                .catch(e => console.log(e));
-            
             res.status(201).json(result);
-            //console.log(result);
+            const products = await fetchAllProducts();
+            client.set('products', JSON.stringify(products));
         }
     }
     catch (e) {
@@ -212,12 +209,10 @@ route.put('/:id', async (req, res) => {
         }
         else {
             const updatedProduct = await db.one('UPDATE products SET name = $1, current_price = $2, original_price = $3, category = $4, image_url = $5, page_url = $6, last_modified_date = $7   where id = $8 RETURNING *', [name, current_price, original_price, category, image_url, page_url, last_modified_date, id]);
-            client.del(`products/${id}`)
-                .then(count => console.log(`Delete ${count} entry of cache key products`))
-                .catch(e => console.log(e));
-            
             res.status(200).json(updatedProduct);
             //console.log(updatedProduct);
+            const product = await fetchDetailProduct(id);
+            client.set(`products/${id}`, JSON.stringify(product));
         }
     }
     catch (e) {
@@ -239,7 +234,7 @@ route.delete('/:id', async (req, res) => {
             client.del('products')
                 .then(count => console.log(`Delete ${count} entry of cache key products`))
                 .catch(e => console.log(e));
-            
+
             res.status(200).send('Success')
         }
         else {
