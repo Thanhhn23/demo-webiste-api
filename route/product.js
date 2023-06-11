@@ -173,24 +173,18 @@ route.get('/:id', async (req, res) => {
 
 route.post('/', async (req, res) => {
     try {
-        const { id, name, price, url, fromPrice, toPrice, originalPrice, category, image_url } = req.body;
-
-        if (fromPrice && toPrice) {
-            const result = await db.query(`SELECT * FROM products WHERE current_price BETWEEN $1 AND $2`, [fromPrice, toPrice])
-            return res.status(200).json(result);
-        };
+        const { id, name, currentPrice, pageUrl, originalPrice, category, imageUrl } = req.body;
+        console.log(id, name, currentPrice, pageUrl, originalPrice, category, imageUrl);   
 
         if (!(req.user.user_type == "admin")) {
             return res.status(401).json({ message: "You don't have the permisson" })
         }
 
-
-
         if (!id) {
             res.status(400).send('Invalid data input.Please try again')
         }
         else {
-            const result = await db.one('INSERT INTO products (id, name, current_price, original_price, page_url, category, image_url, created_date, last_modified_date) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *', [id, name, price, originalPrice, url, category, image_url, new Date(), new Date()]);
+            const result = await db.one('INSERT INTO products (id, name, current_price, original_price, page_url, category, image_url, created_date, last_modified_date) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *', [id, name, currentPrice, originalPrice, pageUrl, category, imageUrl, new Date(), new Date()]);
             client.del('products')
                 .then(count => console.log(`Delete ${count} entry of cache key products`))
                 .catch(e => console.log(e));
