@@ -6,6 +6,7 @@ const orderRoute = require('./route/order');
 const uploadImage = require('./route/uploadImage');
 const login = require('./route/login');
 const authentication = require('./route/authentication');
+const getcode = require('./route/getcode');
 const path = require("path");
 const { authenticateUser } = require('./middle');
 const app = new express();
@@ -32,6 +33,8 @@ app.use('/api/v1/upload', authenticateUser, uploadImage);
 app.use('/api/v1/users', login);
 
 app.use('/api/v1/authenticate', authenticateUser, authentication);
+
+app.use('/promotion-partner/v1/get-code', getcode);
 
 
 app.get('/', (req, res) => {
