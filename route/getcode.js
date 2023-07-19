@@ -7,6 +7,8 @@ app.use(express.json());
 
 route.post('/', async (req,res) => {
     res.status(404).json({messsage:'fail'})
+    console.log(req.body)
+    console.log(req.url)
 })
 
 
