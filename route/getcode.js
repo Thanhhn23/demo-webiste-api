@@ -6,7 +6,7 @@ const app = new express();
 app.use(express.json());
 
 route.post('/', async (req,res) => {
-    res.status(200).json({success:'true'})
+    res.status(200).json({success:'true',message:'keep it up'})
     console.log('body', req.body)
     console.log('url', req.baseUrl)
 })
